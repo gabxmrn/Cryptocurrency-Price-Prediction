@@ -24,7 +24,7 @@ def load_data(start_date: datetime, end_date: datetime, price_type: str) -> Tupl
     if price_type.lower() not in ['open', 'high', 'low', 'close']:
         raise ValueError('Price should be one of: open, high, low or close.')
 
-    xls = pd.read_excel(r'data.xlsx', sheet_name=['BTC', 'LTC', 'ETH'])
+    xls = pd.read_excel(r'Database.xlsx', sheet_name=['BTC', 'LTC', 'ETH'])
 
     def process_data(df: pd.DataFrame, crypto_name: str):
         df['Date'] = pd.to_datetime(df['Date'])

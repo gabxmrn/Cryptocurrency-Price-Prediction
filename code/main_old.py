@@ -1,4 +1,4 @@
-from data import load_data, split_data, plot_data, plot_correlation
+from data_old import load_data, split_data, plot_data, plot_correlation
 from LSTM import LSTM
 
 
