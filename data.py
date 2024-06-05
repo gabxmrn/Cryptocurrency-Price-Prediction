@@ -118,6 +118,22 @@ class DataProcessing:
         plt.grid(False)
         plt.show()
         
+    def plot_all_data(self) -> None:
+        """
+        Plots the closing prices for all assets managed by this instance.
+        """
+        plt.figure(figsize=(10, 5))
+        for asset in self.asset_names :
+            data = self.asset_data[asset]
+            plt.plot(data.index, data, label=asset)
+
+        plt.title(f'Time series with closing prices for all assets')
+        plt.xlabel('Price Date')
+        plt.ylabel('Price US Dollar')
+        plt.legend()
+        plt.grid(False)
+        plt.show()
+        
     def plot_correlation(self, asset_names:list) -> None:
         """
         Plots a correlation matrix for the specified assets to visualize the relationships between them.

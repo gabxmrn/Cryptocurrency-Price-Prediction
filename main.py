@@ -16,11 +16,13 @@ eth = database.asset_data['ETH'] # Ethereum
 
 ### 2) Data exploration and visualization
 
-database.plot_data(asset_name='BTC', splitting_date='2020-10-22')
-database.plot_data(asset_name='LTC', splitting_date='2020-10-22')
-database.plot_data(asset_name='ETH', splitting_date='2020-10-22')
+database.plot_data(asset_name='BTC', splitting_date='2020-10-22') # Figure 2
+database.plot_data(asset_name='LTC', splitting_date='2020-10-22') # Figure 3
+database.plot_data(asset_name='ETH', splitting_date='2020-10-22') # Figure 4
 
-database.plot_correlation(asset_names=['BTC', 'LTC', 'ETH'])
+database.plot_all_data() # Figure 8
+
+database.plot_correlation(asset_names=['BTC', 'LTC', 'ETH']) # Figure 9
 
 
 ### 3) Training three types of models 
@@ -32,6 +34,7 @@ database.plot_correlation(asset_names=['BTC', 'LTC', 'ETH'])
 btc_train, btc_test = database.get_splitted_data(asset_name='BTC', splitting_date='2020-10-22')
 ltc_train, ltc_test = database.get_splitted_data(asset_name='LTC', splitting_date='2020-10-22')
 eth_train, eth_test = database.get_splitted_data(asset_name='ETH', splitting_date='2020-10-22')
+
 
 
 ### 4) Testing the models 
