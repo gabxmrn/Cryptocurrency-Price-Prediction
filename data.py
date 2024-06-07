@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 import datetime
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -98,6 +99,33 @@ class DataProcessing:
         train = data[data.index < splitting_date]
         test = data[data.index >= splitting_date]
         return (train, test) 
+    
+    def get_prepared_data(self, asset_name:str, splitting_date:datetime, n_steps:int) -> tuple:
+        """
+        Prepare data for time series forecasting models.
+
+        Parameters:
+        - asset_name: str - the name of the asset to prepare data for.
+        - splitting_date: datetime - the date to split the training and testing data.
+        - n_steps: int - number of time steps to include in the input features.
+
+        Returns:
+        - tuple (np.array, np.array, np.array, np.array): Arrays of input features and output labels for train & test series.
+        """
+        train, test = self.get_splitted_data(asset_name, splitting_date)
+        train, test = train.values.flatten(), test.values.flatten()
+        
+        X_train, X_test, y_train, y_test = [], [], [], []
+        
+        for i in range(len(train) - n_steps):
+            X_train.append(train[i:i+n_steps])
+            y_train.append(train[i+n_steps])
+            
+        for j in range(len(test) - n_steps):
+            X_test.append(test[j:j+n_steps])
+            y_test.append(test[j+n_steps])
+        
+        return np.array(X_train), np.array(y_train), np.array(X_test), np.array(y_test)
     
     def plot_data(self, asset_name:str, splitting_date: datetime) -> None:
         """
