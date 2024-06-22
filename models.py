@@ -1,52 +1,47 @@
 import torch
 import torch.nn as nn
-import torch.optim as optim
 import numpy as np
 
-class Models(nn.Module):
-    def __init__(self):
-        super(Models, self).__init__()
-
-    def get_rmse(self, predictions, targets) -> float :
-        # return np.sqrt(mean_squared_error(targets, predictions))
-        return np.sqrt(np.mean((targets - predictions)**2))
-    
-    def get_mape(self, predictions, targets) -> float :
-        return np.mean(np.abs((targets - predictions) / targets)) * 100
-
-    def train_model(self, optimizer, y, X, loss_fct):
-        for t in range(10) :
-            self.train()
-            optimizer.zero_grad()
-            outputs = self(X)
-            loss = loss_fct(outputs, y)
-            # print(f'loss : {loss}')
-            loss.backward()
-            optimizer.step()
-    
-    def test_model(self, y, X, loss_fct) :
-        self.eval()  
-        with torch.no_grad(): 
-            predictions = self(X)  
-            loss = loss_fct(predictions, y)  
-            print(f'Loss: {loss.item()}')
-        # return predictions 
-        return predictions.cpu().detach().numpy()
-
-
-class LSTM(Models):
-
-    def __init__(self, input_dim: int, hidden_dim: int, output_dim: int, nb_layers: int):
-        super(Models, self).__init__()
+class Model(nn.Module):
+    def __init__(self, input_dim, hidden_dim, layer_dim, output_dim, model_type):
+        super(Model, self).__init__()
         self.hidden_dim = hidden_dim
-        self.nb_layers = nb_layers
-        self.lstm = nn.LSTM(input_dim, hidden_dim, nb_layers, batch_first=True)
+        self.layer_dim = layer_dim
+        
+        if model_type == "LSTM":
+            self.model = nn.LSTM(input_dim, hidden_dim, layer_dim, batch_first=True)
+        elif model_type == "GRU":
+            self.model = nn.GRU(input_dim, hidden_dim, layer_dim, batch_first=True)
+        elif model_type == "bi-LSTM":
+            self.model = nn.LSTM(input_dim, hidden_dim, layer_dim, batch_first=True, bidirectional=True)
+            hidden_dim *= 2 
         self.fc = nn.Linear(hidden_dim, output_dim)
-
+        
     def forward(self, x):
-        if x.dim() == 2:
-            x = x.unsqueeze(1)  # Add a batch dimension if missing
-        h0 = torch.zeros(self.nb_layers, x.size(0), self.hidden_dim).to(x.device)
-        c0 = torch.zeros(self.nb_layers, x.size(0), self.hidden_dim).to(x.device)
-        out, _ = self.lstm(x, (h0, c0))
-        return self.fc(out[:, -1, :])
+        out, _ = self.model(x)
+        out = self.fc(out[:, -1, :])
+        return out
+
+    def train_model(self, epochs, loader, criterion, optimizer):
+        self.train()
+        for epoch in range(epochs):
+            for i, (features, labels) in enumerate(loader):
+                optimizer.zero_grad()
+                outputs = self(features)
+                loss = criterion(outputs, labels)
+                loss.backward()
+                optimizer.step()
+            # if epoch%10 == 0 :
+            #     print(f'Epoch {epoch}, Loss: {loss.item():.4f}')
+            
+    def test_model(self, loader, scaler):
+        self.eval()
+        predictions = []
+        actuals = []
+        with torch.no_grad():
+            for features, labels in loader:
+                outputs = self(features)
+                predictions.extend(outputs.numpy())
+                actuals.extend(labels.numpy())
+
+        return scaler.inverse_transform(np.array(predictions).reshape(-1, 1))

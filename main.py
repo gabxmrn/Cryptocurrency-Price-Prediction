@@ -1,74 +1,92 @@
 from data import DataProcessing
-from models import LSTM
+from models import Model
+import tools
 
 import torch
 import torch.nn as nn
-from torch.utils.data import TensorDataset, DataLoader
-import matplotlib.pyplot as plt
+from datetime import datetime
 
 
-### 1) Collecting historical cryptocurrency data 
+### STEP 1 - Collecting historical cryptocurrency data
 
-database = DataProcessing(file_name='Database', 
+dataset = DataProcessing(file_name='Database', 
                           asset_names=['BTC', 'LTC', 'ETH'], 
                           start_date='2018-01-01', 
-                          end_date='2021-06-30', 
-                          price_type='Close')
+                          end_date='2021-06-30')
 
-btc = database.asset_data['BTC'] # Bitcoin
-ltc = database.asset_data['LTC'] # Litecoin
-eth = database.asset_data['ETH'] # Ethereum
-
-n_steps = 10 # number of time steps to include in the input features
-splitting_date = '2020-10-22' # the date to split the training and testing data
-
-X_btc_train, y_btc_train, X_btc_test, y_btc_test, = database.get_prepared_data(asset_name='BTC', splitting_date=splitting_date, n_steps=n_steps)
-X_ltc_train, y_ltc_train, X_ltc_test, y_ltc_test, = database.get_prepared_data(asset_name='LTC', splitting_date=splitting_date, n_steps=n_steps)
-X_eth_train, y_eth_train, X_eth_test, y_eth_test, = database.get_prepared_data(asset_name='ETH', splitting_date=splitting_date, n_steps=n_steps)
+split_date = datetime.strptime('2020-10-22', '%Y-%m-%d')
 
 
-### 2) Data exploration and visualization
+### STEP 2 - Data exploration and visualization 
 
-# database.plot_data(asset_name='BTC', splitting_date='2020-10-22') # Figure 2
-# database.plot_data(asset_name='LTC', splitting_date='2020-10-22') # Figure 3
-# database.plot_data(asset_name='ETH', splitting_date='2020-10-22') # Figure 4
+tools.plot_asset("BTC", dataset.data["BTC"], "Close", split_date)
+tools.plot_asset("ETH", dataset.data["ETH"], "Close", split_date)
+tools.plot_asset("LTC", dataset.data["LTC"], "Close", split_date)
 
-# database.plot_all_data() # Figure 8
+tools.plot_all_assets(['BTC', 'LTC', 'ETH'], dataset.data, "Close")
 
-# database.plot_correlation(asset_names=['BTC', 'LTC', 'ETH']) # Figure 9
+tools.plot_correlation(['BTC', 'LTC', 'ETH'], dataset.data, "Close")
 
 
-### 3) Training three types of models 
-    # Gated recurrent unit (GRU) 
-    # Bidirectional LSTM (bi-LSTM)
-    # Training -> from 22/01/2018 until 22/10/2020 (80%)
+### STEP 3 - Deep Learning Models
 
-    # Long short-term memory (LSTM) :
+models_args = {"sequence_lenght":10,
+                "batch_size":64, 
+                "input_dim": 1,
+                "hidden_dim":64,
+                "layer_dim":1,
+                "output_dim":1,
+                "epochs":75, 
+                "criterion":nn.MSELoss()
+                }
 
-LTSM_model = LSTM(input_dim=n_steps, 
-                  hidden_dim=50, 
-                  output_dim=1, 
-                  nb_layers=2)
+LSTM = Model(models_args["input_dim"], models_args["hidden_dim"], models_args["layer_dim"], models_args["output_dim"], model_type="LSTM")
+GRU = Model(models_args["input_dim"], models_args["hidden_dim"], models_args["layer_dim"], models_args["output_dim"], model_type="GRU")
+BI_LSTM = Model(models_args["input_dim"], models_args["hidden_dim"], models_args["layer_dim"], models_args["output_dim"], model_type="bi-LSTM")
 
-X_btc_train_tensor = torch.tensor(X_btc_train, dtype=torch.float32)
-y_btc_train_tensor = torch.tensor(y_btc_train, dtype=torch.float32).unsqueeze(1)
-X_btc_test_tensor = torch.tensor(X_btc_test, dtype=torch.float32)
-y_btc_test_tensor = torch.tensor(y_btc_test, dtype=torch.float32).unsqueeze(1)
+models = {"LSTM":LSTM,
+            "LSTM_optimizer":torch.optim.Adam(LSTM.parameters(), lr=0.01),
+            "GRU":GRU,
+            "GRU_optimizer":torch.optim.Adam(GRU.parameters(), lr=0.01),
+            "BI_LSTM":BI_LSTM,
+            "BI_LSTM_optimizer":torch.optim.Adam(BI_LSTM.parameters(), lr=0.01) 
+            }
 
-optimizer = torch.optim.Adam(LTSM_model.parameters(), lr=0.01) # lr = learning rate 
-loss_fct = nn.MSELoss()
-LTSM_model.train_model(optimizer, y_btc_train_tensor, X_btc_train_tensor, loss_fct)
-btc_predictions = LTSM_model.test_model(y_btc_train_tensor, X_btc_train_tensor, loss_fct)
-print(btc_predictions)
+    # BTC 
 
-plt.figure(figsize=(10, 5))  # Définit la taille du graphique
-plt.plot(btc_predictions, label='Data')  # Trace les données avec une légende
-plt.title('Example Plot')  # Ajoute un titre au graphique
-plt.xlabel('Time')  # Nomme l'axe des x
-plt.ylabel('Value')  # Nomme l'axe des y
-plt.show()  # Affiche le graphique
+btc_asset, btc_train_loader, btc_test_loader = dataset.get_data_loader("BTC", models_args["sequence_lenght"], split_date, models_args["batch_size"]) 
 
-### 4) Testing the models 
-    # Testing -> from 22/10/2020 until 30/06/2021 (20%)
+btc_args = {"asset":btc_asset, 
+                "train_loader":btc_train_loader, 
+                "test_loader":btc_test_loader,
+                "scaler":btc_asset.get_scaler()
+                }
 
-### 5) Extracting and comparing the results 
+btc_results = tools.run_process("BTC", btc_args, models, models_args, True)
+print(btc_results)
+
+    # ETH 
+    
+eth_asset, eth_train_loader, eth_test_loader = dataset.get_data_loader("ETH", models_args["sequence_lenght"], split_date, models_args["batch_size"]) 
+
+eth_args = {"asset":eth_asset, 
+                "train_loader":eth_train_loader, 
+                "test_loader":eth_test_loader,
+                "scaler":eth_asset.get_scaler()
+                }
+
+eth_results = tools.run_process("ETH", eth_args, models, models_args, True)
+print(eth_results)
+
+    # LTC    
+
+ltc_asset, ltc_train_loader, ltc_test_loader = dataset.get_data_loader("LTC", models_args["sequence_lenght"], split_date, models_args["batch_size"]) 
+
+ltc_args = {"asset":ltc_asset, 
+                "train_loader":ltc_train_loader, 
+                "test_loader":ltc_test_loader,
+                "scaler":ltc_asset.get_scaler()
+                }
+
+ltc_results = tools.run_process("LTC", ltc_args, models, models_args, True)
+print(ltc_results)
