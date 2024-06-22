@@ -19,9 +19,9 @@ split_date = datetime.strptime('2020-10-22', '%Y-%m-%d')
 
 ### STEP 2 - Data exploration and visualization 
 
-tools.plot_asset("BTC", dataset.data["BTC"], "Close", split_date)
-tools.plot_asset("ETH", dataset.data["ETH"], "Close", split_date)
-tools.plot_asset("LTC", dataset.data["LTC"], "Close", split_date)
+tools.plot_asset("BTC", dataset.data["BTC"], split_date, "Close")
+tools.plot_asset("ETH", dataset.data["ETH"], split_date, "Close")
+tools.plot_asset("LTC", dataset.data["LTC"], split_date, "Close")
 
 tools.plot_all_assets(['BTC', 'LTC', 'ETH'], dataset.data, "Close")
 
