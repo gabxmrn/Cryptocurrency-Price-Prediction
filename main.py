@@ -38,7 +38,7 @@ models_args = {"sequence_lenght":10,
                 "output_dim":1,
                 "epochs":75, 
                 "criterion":nn.MSELoss()
-                }
+            }
 
 LSTM = Model(models_args["input_dim"], models_args["hidden_dim"], models_args["layer_dim"], models_args["output_dim"], model_type="LSTM")
 GRU = Model(models_args["input_dim"], models_args["hidden_dim"], models_args["layer_dim"], models_args["output_dim"], model_type="GRU")
@@ -50,7 +50,7 @@ models = {"LSTM":LSTM,
             "GRU_optimizer":torch.optim.Adam(GRU.parameters(), lr=0.01),
             "BI_LSTM":BI_LSTM,
             "BI_LSTM_optimizer":torch.optim.Adam(BI_LSTM.parameters(), lr=0.01) 
-            }
+        }
 
     # BTC 
 
@@ -60,7 +60,7 @@ btc_args = {"asset":btc_asset,
                 "train_loader":btc_train_loader, 
                 "test_loader":btc_test_loader,
                 "scaler":btc_asset.get_scaler()
-                }
+            }
 
 btc_results = tools.run_process("BTC", btc_args, models, models_args, True)
 print(btc_results)
@@ -73,7 +73,7 @@ eth_args = {"asset":eth_asset,
                 "train_loader":eth_train_loader, 
                 "test_loader":eth_test_loader,
                 "scaler":eth_asset.get_scaler()
-                }
+            }
 
 eth_results = tools.run_process("ETH", eth_args, models, models_args, True)
 print(eth_results)
@@ -86,7 +86,7 @@ ltc_args = {"asset":ltc_asset,
                 "train_loader":ltc_train_loader, 
                 "test_loader":ltc_test_loader,
                 "scaler":ltc_asset.get_scaler()
-                }
+            }
 
 ltc_results = tools.run_process("LTC", ltc_args, models, models_args, True)
 print(ltc_results)
